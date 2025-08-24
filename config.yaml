@@ -1,0 +1,5 @@
+routes:
+  - path: /user
+    upstream: http://localhost:8081
+  - path: /order
+    upstream: http://localhost:8082
