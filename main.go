@@ -6,13 +6,22 @@ import (
 	"net/http"
 )
 
+func getHandler(handler handler.Handler, middlewares ...middleware.Middleware) http.Handler {
+	if len(middlewares) == 0 {
+		return handler.Handle()
+	}
+	for i := 0; i < len(middlewares)-1; i++ {
+		middlewares[i].SetNext(middlewares[i+1].Handle())
+	}
+	middlewares[len(middlewares)-1].SetNext(handler.Handle())
+	return middlewares[0].Handle()
+}
+
 func main() {
 	proxy := handler.NewGateway()
 	logMiddleware := middleware.NewLog()
-	logMiddleware.SetNext(proxy.Handle())
 	recoveryMiddleware := middleware.NewRecover()
-	recoveryMiddleware.SetNext(logMiddleware.Handle())
-	http.Handle("/", recoveryMiddleware.Handle())
+	http.Handle("/", getHandler(&proxy, &logMiddleware, &recoveryMiddleware))
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)
 	}
