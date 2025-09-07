@@ -21,7 +21,8 @@ func main() {
 	proxy := handler.NewGateway()
 	logMiddleware := middleware.NewLog()
 	recoveryMiddleware := middleware.NewRecover()
-	http.Handle("/", getHandler(&proxy, &logMiddleware, &recoveryMiddleware))
+	authenticateMiddleware := middleware.NewAuthenticate()
+	http.Handle("/", getHandler(&proxy, &logMiddleware, &recoveryMiddleware, &authenticateMiddleware))
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)
 	}

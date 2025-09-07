@@ -4,6 +4,7 @@ go 1.24.0
 
 require (
 	github.com/goccy/go-yaml v1.18.0
+	github.com/golang-jwt/jwt/v5 v5.3.0
 	go.uber.org/zap v1.27.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )

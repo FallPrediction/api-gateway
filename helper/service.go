@@ -8,8 +8,10 @@ import (
 )
 
 type Route struct {
+	Name     string `yaml:"name"`
 	Path     string `yaml:"path"`
 	Upstream string `yaml:"upstream"`
+	Auth     bool   `yaml:"auth"`
 }
 
 func GetServiceName(url string) (Route, bool) {
