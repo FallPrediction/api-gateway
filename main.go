@@ -2,6 +2,7 @@ package main
 
 import (
 	"api-gateway/handler"
+	"api-gateway/helper"
 	"api-gateway/middleware"
 	"net/http"
 )
@@ -19,10 +20,17 @@ func getHandler(handler handler.Handler, middlewares ...middleware.Middleware) h
 
 func main() {
 	proxy := handler.NewGateway()
+	rateLimitMiddleware := middleware.NewRateLimit(helper.NewRateLimiter())
 	logMiddleware := middleware.NewLog()
 	recoveryMiddleware := middleware.NewRecover()
 	authenticateMiddleware := middleware.NewAuthenticate()
-	http.Handle("/", getHandler(&proxy, &logMiddleware, &recoveryMiddleware, &authenticateMiddleware))
+	http.Handle("/", getHandler(
+		&proxy,
+		&rateLimitMiddleware,
+		&logMiddleware,
+		&recoveryMiddleware,
+		&authenticateMiddleware,
+	))
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)
 	}
