@@ -5,6 +5,8 @@ import (
 	"api-gateway/helper"
 	"api-gateway/middleware"
 	"net/http"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func getHandler(handler handler.Handler, middlewares ...middleware.Middleware) http.Handler {
@@ -31,6 +33,7 @@ func main() {
 		&recoveryMiddleware,
 		&authenticateMiddleware,
 	))
+	http.Handle("/metrics", promhttp.HandlerFor(helper.NewRegistry(), promhttp.HandlerOpts{}))
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)
 	}
