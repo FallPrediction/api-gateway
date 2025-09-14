@@ -34,6 +34,7 @@ func main() {
 		&authenticateMiddleware,
 	))
 	http.Handle("/metrics", promhttp.HandlerFor(helper.NewRegistry(), promhttp.HandlerOpts{}))
+	http.Handle("/health", handler.NewHealth().Handle())
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)
 	}
