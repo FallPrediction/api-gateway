@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"api-gateway/helper"
 	"api-gateway/logger"
 	"fmt"
 	"net/http"
@@ -23,7 +24,9 @@ func (m *Recovery) Handle() http.Handler {
 					"Panic recovered.",
 					zap.String("err", fmt.Sprintf("%v", err)),
 				)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				helper.JSONResponse(w, http.StatusInternalServerError, map[string]string{
+					"msg": "Internal Server Error",
+				})
 			}
 		}()
 

@@ -39,15 +39,21 @@ func (m *Authenticate) Handle() http.Handler {
 		if ok && route.Auth {
 			userClaim, ok := m.getUserClaim(r)
 			if !ok {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				helper.JSONResponse(w, http.StatusUnauthorized, map[string]string{
+					"msg": "Unauthorized",
+				})
 				return
 			}
 			if userClaim.ExpiresAt.Compare(time.Now()) == -1 {
-				http.Error(w, "Token expired", http.StatusForbidden)
+				helper.JSONResponse(w, http.StatusForbidden, map[string]string{
+					"msg": "Token expired",
+				})
 				return
 			}
 			if !slices.Contains(strings.Split(userClaim.Scope, ","), route.Name) {
-				http.Error(w, "Forbidden", http.StatusForbidden)
+				helper.JSONResponse(w, http.StatusForbidden, map[string]string{
+					"msg": "Forbidden",
+				})
 				return
 			}
 			m.setClaimToHeader(userClaim, r)

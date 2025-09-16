@@ -1,16 +1,17 @@
 package handler
 
-import "net/http"
+import (
+	"api-gateway/helper"
+	"net/http"
+)
 
 var _ Handler = new(Health)
 
-type Health struct {
-	baseHandler
-}
+type Health struct{}
 
 func (h *Health) Handle() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h.JSONResponse(w, http.StatusOK, map[string]string{
+		helper.JSONResponse(w, http.StatusOK, map[string]string{
 			"msg": "OK",
 		})
 	})
