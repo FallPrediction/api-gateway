@@ -14,17 +14,9 @@ type Route struct {
 	Auth     bool   `yaml:"auth"`
 }
 
-func GetServiceName(url string) (Route, bool) {
-	serviceName := ""
-	parts := strings.SplitN(url, "/", 1)
-	if len(parts) > 0 {
-		serviceName = parts[0]
-	}
-	route, ok := NewService()[serviceName]
-	return route, ok
-}
+var Origins map[string]Route
 
-func NewService() map[string]Route {
+func init() {
 	data, err := os.ReadFile("./config.yaml")
 	if err != nil {
 		panic(err)
@@ -37,9 +29,18 @@ func NewService() map[string]Route {
 		panic(err)
 	}
 
-	services := make(map[string]Route)
+	Origins = make(map[string]Route)
 	for _, route := range cfg.Routes {
-		services[route.Path] = route
+		Origins[route.Path] = route
 	}
-	return services
+}
+
+func GetOrigin(url string) (Route, bool) {
+	serviceName := ""
+	parts := strings.SplitN(url, "/", 1)
+	if len(parts) > 0 {
+		serviceName = parts[0]
+	}
+	route, ok := Origins[serviceName]
+	return route, ok
 }

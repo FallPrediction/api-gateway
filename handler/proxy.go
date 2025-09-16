@@ -15,7 +15,7 @@ type Gateway struct{}
 
 func (h *Gateway) Handle() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		route, ok := helper.GetServiceName(r.URL.Path)
+		route, ok := helper.GetOrigin(r.URL.Path)
 		if ok {
 			url, _ := url.Parse(route.Upstream)
 			proxy := httputil.NewSingleHostReverseProxy(url)
