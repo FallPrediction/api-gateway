@@ -35,7 +35,7 @@ func NewLogger() *zap.Logger {
 				logLevel = zapcore.ErrorLevel
 			}
 			core := zapcore.NewCore(getEncoder(), getLogWriter(), logLevel)
-			logger = zap.New(core, zap.AddStacktrace(logLevel))
+			logger = zap.New(core, zap.AddStacktrace(zapcore.ErrorLevel))
 		})
 	}
 	return logger
