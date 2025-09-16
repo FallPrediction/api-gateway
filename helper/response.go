@@ -31,8 +31,11 @@ func writeJSON(w http.ResponseWriter, obj any) error {
 	return err
 }
 
-func JSONResponse(w http.ResponseWriter, code int, obj any) {
+func JSONResponse(w http.ResponseWriter, code int, headers map[string]string, obj any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	for k, v := range headers {
+		w.Header().Set(k, v)
+	}
 	w.WriteHeader(code)
 	if err := writeJSON(w, obj); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

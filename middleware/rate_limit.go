@@ -27,7 +27,7 @@ func (m *RateLimit) Handle() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !m.getLimiter(r.URL.Path).Allow() {
 			helper.GatewayRequestTotal.WithLabelValues("reject", r.URL.Path).Inc()
-			helper.JSONResponse(w, http.StatusTooManyRequests, map[string]string{
+			helper.JSONResponse(w, http.StatusTooManyRequests, map[string]string{}, map[string]string{
 				"msg": "Too Many Requests",
 			})
 			return

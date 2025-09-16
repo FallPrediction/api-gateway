@@ -11,7 +11,7 @@ type Health struct{}
 
 func (h *Health) Handle() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		helper.JSONResponse(w, http.StatusOK, map[string]string{
+		helper.JSONResponse(w, http.StatusOK, map[string]string{}, map[string]string{
 			"msg": "OK",
 		})
 	})

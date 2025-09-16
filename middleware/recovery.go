@@ -24,7 +24,7 @@ func (m *Recovery) Handle() http.Handler {
 					"Panic recovered.",
 					zap.String("err", fmt.Sprintf("%v", err)),
 				)
-				helper.JSONResponse(w, http.StatusInternalServerError, map[string]string{
+				helper.JSONResponse(w, http.StatusInternalServerError, map[string]string{}, map[string]string{
 					"msg": "Internal Server Error",
 				})
 			}
