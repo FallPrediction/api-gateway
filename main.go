@@ -22,7 +22,7 @@ func getHandler(handler handler.Handler, middlewares ...middleware.Middleware) h
 
 func main() {
 	proxy := handler.NewGateway()
-	rateLimitMiddleware := middleware.NewRateLimit(helper.NewRateLimiter())
+	rateLimitMiddleware := middleware.NewRateLimit(helper.NewRateLimiters())
 	logMiddleware := middleware.NewLog()
 	recoveryMiddleware := middleware.NewRecover()
 	authenticateMiddleware := middleware.NewAuthenticate()
