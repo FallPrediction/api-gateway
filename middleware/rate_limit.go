@@ -2,7 +2,9 @@ package middleware
 
 import (
 	"api-gateway/helper"
+	"math"
 	"net/http"
+	"strconv"
 
 	"golang.org/x/time/rate"
 )
@@ -16,20 +18,28 @@ type RateLimit struct {
 var _ Middleware = new(RateLimit)
 
 func (m *RateLimit) getLimiter(url string) *rate.Limiter {
-	route, ok := helper.GetOrigin(url)
+	origin, ok := helper.GetOrigin(url)
 	if ok {
-		return m.limiters[route.Name]
+		return m.limiters[origin.Name]
 	}
 	return m.defaultLimiter
 }
 
 func (m *RateLimit) Handle() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !m.getLimiter(r.URL.Path).Allow() {
+		reservation := m.getLimiter(r.URL.Path).Reserve()
+		if !reservation.OK() {
 			helper.GatewayRequestTotal.WithLabelValues("reject", r.URL.Path).Inc()
-			helper.JSONResponse(w, http.StatusTooManyRequests, map[string]string{}, map[string]string{
-				"msg": "Too Many Requests",
-			})
+			helper.JSONResponse(
+				w,
+				http.StatusTooManyRequests,
+				map[string]string{
+					"Retry-After": strconv.Itoa(int(math.Ceil(reservation.Delay().Seconds()))),
+				},
+				map[string]string{
+					"msg": "Too Many Requests",
+				},
+			)
 			return
 		}
 		helper.GatewayRequestTotal.WithLabelValues("accept", r.URL.Path).Inc()

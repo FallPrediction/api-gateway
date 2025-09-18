@@ -8,10 +8,10 @@ import (
 )
 
 type cfg struct {
-	Routes []Route `yaml:"origins"`
+	Origins []Origin `yaml:"origins"`
 }
 
-type Route struct {
+type Origin struct {
 	Name     string `yaml:"name"`
 	Path     string `yaml:"path"`
 	Origin   string `yaml:"origin"`
@@ -22,7 +22,7 @@ type Route struct {
 	} `yaml:"rate_limit"`
 }
 
-var Routes map[string]Route
+var Origins map[string]Origin
 
 func init() {
 	data, err := os.ReadFile("./config.yaml")
@@ -35,18 +35,18 @@ func init() {
 		panic(err)
 	}
 
-	Routes = make(map[string]Route)
-	for _, route := range cfg.Routes {
-		Routes[route.Path] = route
+	Origins = make(map[string]Origin)
+	for _, origin := range cfg.Origins {
+		Origins[origin.Path] = origin
 	}
 }
 
-func GetOrigin(url string) (Route, bool) {
+func GetOrigin(url string) (Origin, bool) {
 	serviceName := ""
 	parts := strings.SplitN(url, "/", 1)
 	if len(parts) > 0 {
 		serviceName = parts[0]
 	}
-	route, ok := Routes[serviceName]
-	return route, ok
+	origin, ok := Origins[serviceName]
+	return origin, ok
 }
