@@ -28,9 +28,9 @@ func main() {
 	authenticateMiddleware := middleware.NewAuthenticate()
 	http.Handle("/", getHandler(
 		&proxy,
+		&recoveryMiddleware,
 		&rateLimitMiddleware,
 		&logMiddleware,
-		&recoveryMiddleware,
 		&authenticateMiddleware,
 	))
 	http.Handle("/metrics", promhttp.HandlerFor(helper.NewRegistry(), promhttp.HandlerOpts{}))
