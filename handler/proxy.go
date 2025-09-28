@@ -24,8 +24,8 @@ func (h *Gateway) Handle() http.Handler {
 
 			proxy.ServeHTTP(w, r)
 
-			helper.RequestDuration.WithLabelValues(r.URL.Path).Observe(time.Since(start).Seconds())
-			helper.RequestsTotal.WithLabelValues(r.Method, strconv.Itoa(rw.StatusCode), r.URL.Path).Inc()
+			helper.RequestDuration.WithLabelValues(helper.GetOriginName(r.URL.Path), r.URL.Path).Observe(time.Since(start).Seconds())
+			helper.RequestsTotal.WithLabelValues(helper.GetOriginName(r.URL.Path), r.Method, strconv.Itoa(rw.StatusCode), r.URL.Path).Inc()
 		} else {
 			http.NotFound(w, r)
 		}

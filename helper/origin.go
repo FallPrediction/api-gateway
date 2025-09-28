@@ -50,3 +50,12 @@ func GetOrigin(url string) (Origin, bool) {
 	origin, ok := Origins[serviceName]
 	return origin, ok
 }
+
+func GetOriginName(url string) string {
+	service := "Unknown"
+	origin, ok := GetOrigin(url)
+	if ok {
+		service = origin.Name
+	}
+	return service
+}

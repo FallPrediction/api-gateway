@@ -11,13 +11,13 @@ var (
 		prometheus.CounterOpts{
 			Name: "gateway_requests_total",
 			Help: "Tracks the number of gateway requests.",
-		}, []string{"operation", "uri"},
+		}, []string{"upstream", "operation", "uri"},
 	)
 	RequestsTotal = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "http_requests_total",
 			Help: "Tracks the number of HTTP requests.",
-		}, []string{"method", "code", "uri"},
+		}, []string{"upstream", "method", "code", "uri"},
 	)
 	RequestDuration = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -25,7 +25,7 @@ var (
 			Help:    "Tracks the latencies for HTTP requests.",
 			Buckets: prometheus.ExponentialBuckets(0.1, 5, 5),
 		},
-		[]string{"uri"},
+		[]string{"upstream", "uri"},
 	)
 )
 
