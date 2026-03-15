@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var _ Handler = new(Gateway)
+var _ Handler = (*Gateway)(nil)
 
 type Gateway struct{}
 

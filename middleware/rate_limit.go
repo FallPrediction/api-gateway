@@ -15,7 +15,7 @@ type RateLimit struct {
 	baseMiddleware
 }
 
-var _ Middleware = new(RateLimit)
+var _ Middleware = (*RateLimit)(nil)
 
 func (m *RateLimit) getLimiter(url string) *rate.Limiter {
 	origin, ok := helper.GetOrigin(url)

@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var _ Middleware = new(Log)
+var _ Middleware = (*Log)(nil)
 
 type Log struct {
 	baseMiddleware

@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var _ Middleware = new(Recovery)
+var _ Middleware = (*Recovery)(nil)
 
 type Recovery struct {
 	baseMiddleware

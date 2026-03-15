@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-var _ Handler = new(Health)
+var _ Handler = (*Health)(nil)
 
 type Health struct{}
 

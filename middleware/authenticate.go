@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var _ Middleware = new(Authenticate)
+var _ Middleware = (*Authenticate)(nil)
 
 type Authenticate struct {
 	baseMiddleware
