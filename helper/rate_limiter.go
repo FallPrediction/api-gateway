@@ -6,11 +6,11 @@ import (
 
 func NewRateLimiters() map[string]*rate.Limiter {
 	limiters := make(map[string]*rate.Limiter)
-	for _, origin := range Origins {
-		if origin.RateLimt.Rate > 0 && origin.RateLimt.Max > 0 {
-			limiters[origin.Name] = rate.NewLimiter(rate.Limit(origin.RateLimt.Rate), origin.RateLimt.Max)
+	for _, upstream := range Upstreams {
+		if upstream.RateLimt.Rate > 0 && upstream.RateLimt.Max > 0 {
+			limiters[upstream.Name] = rate.NewLimiter(rate.Limit(upstream.RateLimt.Rate), upstream.RateLimt.Max)
 		} else {
-			limiters[origin.Name] = NewDefaultRateLimiter()
+			limiters[upstream.Name] = NewDefaultRateLimiter()
 		}
 	}
 	return limiters

@@ -8,13 +8,13 @@ import (
 )
 
 type cfg struct {
-	Origins []Origin `yaml:"origins"`
+	Upstreams []Upstream `yaml:"upstreams"`
 }
 
-type Origin struct {
+type Upstream struct {
 	Name     string `yaml:"name"`
 	Path     string `yaml:"path"`
-	Origin   string `yaml:"origin"`
+	Upstream   string `yaml:"upstream"`
 	Auth     bool   `yaml:"auth"`
 	RateLimt struct {
 		Rate float64 `yaml:"rate"`
@@ -22,7 +22,7 @@ type Origin struct {
 	} `yaml:"rate_limit"`
 }
 
-var Origins map[string]Origin
+var Upstreams map[string]Upstream
 
 func init() {
 	data, err := os.ReadFile("./config.yaml")
@@ -35,27 +35,27 @@ func init() {
 		panic(err)
 	}
 
-	Origins = make(map[string]Origin)
-	for _, origin := range cfg.Origins {
-		Origins[origin.Path] = origin
+	Upstreams = make(map[string]Upstream)
+	for _, upstream := range cfg.Upstreams {
+		Upstreams[upstream.Path] = upstream
 	}
 }
 
-func GetOrigin(url string) (Origin, bool) {
+func GetUpstream(url string) (Upstream, bool) {
 	serviceName := ""
 	parts := strings.SplitN(url, "/", 1)
 	if len(parts) > 0 {
 		serviceName = parts[0]
 	}
-	origin, ok := Origins[serviceName]
-	return origin, ok
+	upstream, ok := Upstreams[serviceName]
+	return upstream, ok
 }
 
-func GetOriginName(url string) string {
+func GetUpstreamName(url string) string {
 	service := "Unknown"
-	origin, ok := GetOrigin(url)
+	upstream, ok := GetUpstream(url)
 	if ok {
-		service = origin.Name
+		service = upstream.Name
 	}
 	return service
 }

@@ -35,8 +35,8 @@ func (m *Authenticate) setClaimToHeader(claim helper.UserClaims, r *http.Request
 
 func (m *Authenticate) Handle() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		origin, ok := helper.GetOrigin(r.URL.Path)
-		if ok && origin.Auth {
+		upstream, ok := helper.GetUpstream(r.URL.Path)
+		if ok && upstream.Auth {
 			userClaim, ok := m.getUserClaim(r)
 			if !ok {
 				helper.JSONResponse(w, http.StatusUnauthorized, map[string]string{}, map[string]string{
@@ -50,7 +50,7 @@ func (m *Authenticate) Handle() http.Handler {
 				})
 				return
 			}
-			if !slices.Contains(strings.Split(userClaim.Scope, ","), origin.Name) {
+			if !slices.Contains(strings.Split(userClaim.Scope, ","), upstream.Name) {
 				helper.JSONResponse(w, http.StatusForbidden, map[string]string{}, map[string]string{
 					"msg": "Forbidden",
 				})

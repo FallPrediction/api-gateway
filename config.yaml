@@ -1,14 +1,14 @@
-origins:
+upstreams:
   - name: user
     path: /user
-    origin: http://localhost:8081
+    upstream: http://localhost:8081
     auth: true
     rate_limit:
       rate: 10
       max: 10
   - name: order
     path: /order
-    origin: http://localhost:8082
+    upstream: http://localhost:8082
     auth: false
     rate_limit:
       rate: 10
