@@ -35,8 +35,8 @@ func (m *Authenticate) setClaimToHeader(claim helper.UserClaims, r *http.Request
 
 func (m *Authenticate) Handle() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		upstream, ok := helper.GetUpstream(r.URL.Path)
-		if ok && upstream.Auth {
+		upstream := helper.GetUpstream(r.Context())
+		if upstream != nil && upstream.Auth {
 			userClaim, ok := m.getUserClaim(r)
 			if !ok {
 				helper.JSONResponse(w, http.StatusUnauthorized, map[string]string{}, map[string]string{

@@ -17,20 +17,22 @@ type RateLimit struct {
 
 var _ Middleware = (*RateLimit)(nil)
 
-func (m *RateLimit) getLimiter(url string) *rate.Limiter {
-	upstream, ok := helper.GetUpstream(url)
-	if ok {
-		return m.limiters[upstream.Name]
+func (m *RateLimit) getLimiter(upstream *helper.Upstream) *rate.Limiter {
+	if upstream == nil {
+		return m.defaultLimiter
+	}
+	if limiter := m.limiters[upstream.Name]; limiter != nil {
+		return limiter
 	}
 	return m.defaultLimiter
 }
 
 func (m *RateLimit) Handle() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		upstream := helper.GetUpstreamName(r.URL.Path)
-		reservation := m.getLimiter(r.URL.Path).Reserve()
+		upstream := helper.GetUpstream(r.Context())
+		reservation := m.getLimiter(upstream).Reserve()
 		if !reservation.OK() {
-			helper.GatewayRequestTotal.WithLabelValues(upstream, "reject", r.URL.Path).Inc()
+			helper.GatewayRequestTotal.WithLabelValues(upstream.Name, "reject", r.URL.Path).Inc()
 			helper.JSONResponse(
 				w,
 				http.StatusTooManyRequests,
@@ -43,7 +45,7 @@ func (m *RateLimit) Handle() http.Handler {
 			)
 			return
 		}
-		helper.GatewayRequestTotal.WithLabelValues(upstream, "accept", r.URL.Path).Inc()
+		helper.GatewayRequestTotal.WithLabelValues(upstream.Name, "accept", r.URL.Path).Inc()
 		m.next.ServeHTTP(w, r)
 	})
 }

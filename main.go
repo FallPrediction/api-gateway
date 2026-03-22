@@ -22,13 +22,15 @@ func getHandler(handler handler.Handler, middlewares ...middleware.Middleware) h
 
 func main() {
 	proxy := handler.NewGateway()
+	recoveryMiddleware := middleware.NewRecover()
+	upstreamMiddleware := middleware.NewUpstream()
 	rateLimitMiddleware := middleware.NewRateLimit(helper.NewRateLimiters())
 	logMiddleware := middleware.NewLog()
-	recoveryMiddleware := middleware.NewRecover()
 	authenticateMiddleware := middleware.NewAuthenticate()
 	http.Handle("/", getHandler(
 		&proxy,
 		&recoveryMiddleware,
+		&upstreamMiddleware,
 		&rateLimitMiddleware,
 		&logMiddleware,
 		&authenticateMiddleware,

@@ -15,8 +15,10 @@ type Gateway struct{}
 
 func (h *Gateway) Handle() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		upstream, ok := helper.GetUpstream(r.URL.Path)
-		if ok {
+		upstream := helper.GetUpstream(r.Context())
+		if upstream == nil {
+			http.NotFound(w, r)
+		} else {
 			url, _ := url.Parse(upstream.Upstream)
 			proxy := httputil.NewSingleHostReverseProxy(url)
 			rw := helper.NewResponseWriter(w)
@@ -24,10 +26,8 @@ func (h *Gateway) Handle() http.Handler {
 
 			proxy.ServeHTTP(w, r)
 
-			helper.RequestDuration.WithLabelValues(helper.GetUpstreamName(r.URL.Path), r.URL.Path).Observe(time.Since(start).Seconds())
-			helper.RequestsTotal.WithLabelValues(helper.GetUpstreamName(r.URL.Path), r.Method, strconv.Itoa(rw.StatusCode), r.URL.Path).Inc()
-		} else {
-			http.NotFound(w, r)
+			helper.RequestDuration.WithLabelValues(upstream.Name, r.URL.Path).Observe(time.Since(start).Seconds())
+			helper.RequestsTotal.WithLabelValues(upstream.Name, r.Method, strconv.Itoa(rw.StatusCode), r.URL.Path).Inc()
 		}
 	})
 }

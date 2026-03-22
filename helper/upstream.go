@@ -1,8 +1,8 @@
 package helper
 
 import (
+	"context"
 	"os"
-	"strings"
 
 	"github.com/goccy/go-yaml"
 )
@@ -14,7 +14,7 @@ type cfg struct {
 type Upstream struct {
 	Name     string `yaml:"name"`
 	Path     string `yaml:"path"`
-	Upstream   string `yaml:"upstream"`
+	Upstream string `yaml:"upstream"`
 	Auth     bool   `yaml:"auth"`
 	RateLimt struct {
 		Rate float64 `yaml:"rate"`
@@ -23,6 +23,10 @@ type Upstream struct {
 }
 
 var Upstreams map[string]Upstream
+
+type upstreamContextKey struct{}
+
+var upstreamCtxKey upstreamContextKey
 
 func init() {
 	data, err := os.ReadFile("./config.yaml")
@@ -41,21 +45,16 @@ func init() {
 	}
 }
 
-func GetUpstream(url string) (Upstream, bool) {
-	serviceName := ""
-	parts := strings.SplitN(url, "/", 1)
-	if len(parts) > 0 {
-		serviceName = parts[0]
-	}
-	upstream, ok := Upstreams[serviceName]
-	return upstream, ok
+func WithUpstream(ctx context.Context, upstream *Upstream) context.Context {
+	return context.WithValue(ctx, upstreamCtxKey, upstream)
 }
 
-func GetUpstreamName(url string) string {
-	service := "Unknown"
-	upstream, ok := GetUpstream(url)
-	if ok {
-		service = upstream.Name
+func GetUpstream(requestContext context.Context) *Upstream {
+	if v := requestContext.Value(upstreamCtxKey); v != nil {
+		upstream, ok := v.(*Upstream)
+		if ok {
+			return upstream
+		}
 	}
-	return service
+	return nil
 }
