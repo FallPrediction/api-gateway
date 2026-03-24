@@ -6,6 +6,13 @@ upstreams:
     rate_limit:
       rate: 10
       max: 10
+    cors:
+      allowed_methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]
+      allowed_origin: "http://*.example.com"
+      allowed_headers: ["*"]
+      exposed_headers: []
+      max_age: 60
+      supports_credentials: false
   - name: order
     path: /order
     upstream: http://localhost:8082

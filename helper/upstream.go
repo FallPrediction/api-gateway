@@ -20,6 +20,14 @@ type Upstream struct {
 		Rate float64 `yaml:"rate"`
 		Max  int     `yaml:"max"`
 	} `yaml:"rate_limit"`
+	Cors struct {
+		AllowedMethods      []string `yaml:"allowed_methods"`
+		AllowedOrigin       string   `yaml:"allowed_origin"`
+		AllowedHeaders      []string `yaml:"allowed_headers"`
+		ExposedHeaders      []string `yaml:"exposed_headers"`
+		MaxAge              int      `yaml:"max_age"`
+		SupportsCredentials bool     `yaml:"supports_credentials"`
+	} `yaml:"cors"`
 }
 
 var Upstreams map[string]Upstream

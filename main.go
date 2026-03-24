@@ -24,6 +24,7 @@ func main() {
 	proxy := handler.NewGateway()
 	recoveryMiddleware := middleware.NewRecover()
 	upstreamMiddleware := middleware.NewUpstream()
+	corsMiddleware := middleware.NewCors()
 	rateLimitMiddleware := middleware.NewRateLimit(helper.NewRateLimiters())
 	logMiddleware := middleware.NewLog()
 	authenticateMiddleware := middleware.NewAuthenticate()
@@ -31,6 +32,7 @@ func main() {
 		&proxy,
 		&recoveryMiddleware,
 		&upstreamMiddleware,
+		&corsMiddleware,
 		&rateLimitMiddleware,
 		&logMiddleware,
 		&authenticateMiddleware,
