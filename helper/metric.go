@@ -27,6 +27,12 @@ var (
 		},
 		[]string{"upstream", "uri"},
 	)
+	CircuitBreakerOpen = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "circuit_breaker_open",
+			Help: "Track the number of times the circuit breaker open.",
+		}, []string{"upstream"},
+	)
 )
 
 func NewRegistry() *prometheus.Registry {
@@ -37,6 +43,7 @@ func NewRegistry() *prometheus.Registry {
 		RequestDuration,
 		RequestsTotal,
 		GatewayRequestTotal,
+		CircuitBreakerOpen,
 	)
 	return registry
 }

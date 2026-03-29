@@ -26,6 +26,7 @@ func main() {
 	upstreamMiddleware := middleware.NewUpstream()
 	corsMiddleware := middleware.NewCors()
 	rateLimitMiddleware := middleware.NewRateLimit(helper.NewRateLimiters())
+	circuitBreakerMiddleware := middleware.NewCircuitBreaker(helper.NewNewCircuitBreakers())
 	logMiddleware := middleware.NewLog()
 	authenticateMiddleware := middleware.NewAuthenticate()
 	http.Handle("/", getHandler(
@@ -34,6 +35,7 @@ func main() {
 		&upstreamMiddleware,
 		&corsMiddleware,
 		&rateLimitMiddleware,
+		&circuitBreakerMiddleware,
 		&logMiddleware,
 		&authenticateMiddleware,
 	))
