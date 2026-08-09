@@ -13,7 +13,7 @@ func writeJSON(w http.ResponseWriter, obj any) error {
 	jsonBytes, err := json.Marshal(obj)
 	logger := logger.NewLogger()
 	if err != nil {
-		logger.Info(
+		logger.Error(
 			"Marshal JSON failed.",
 			zap.String("obj", fmt.Sprintf("%+v", obj)),
 			zap.String("err", err.Error()),
@@ -22,7 +22,7 @@ func writeJSON(w http.ResponseWriter, obj any) error {
 	}
 	_, err = w.Write(jsonBytes)
 	if err != nil {
-		logger.Info(
+		logger.Error(
 			"Response writer writes data failed.",
 			zap.String("json_bytes", string(jsonBytes)),
 			zap.String("err", err.Error()),
