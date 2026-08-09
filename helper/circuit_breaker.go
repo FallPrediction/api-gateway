@@ -57,15 +57,14 @@ func (c *CircuitBreaker) TrialCallOver() {
 func NewNewCircuitBreakers() map[string]*CircuitBreaker {
 	limiters := make(map[string]*CircuitBreaker)
 	for _, upstream := range Upstreams {
-		limiters[upstream.Name] = NewCircuitBreaker()
+		limiters[upstream.Name] = NewCircuitBreaker(5, 30*time.Second)
 	}
 	return limiters
 }
 
-func NewCircuitBreaker() *CircuitBreaker {
-	resetTimeout, _ := time.ParseDuration("30s")
+func NewCircuitBreaker(failureThreshold int, resetTimeout time.Duration) *CircuitBreaker {
 	return &CircuitBreaker{
-		failureThreshold: 5,
+		failureThreshold: uint32(failureThreshold),
 		resetTimeout:     resetTimeout,
 	}
 }
