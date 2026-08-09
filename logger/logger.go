@@ -2,11 +2,11 @@ package logger
 
 import (
 	"os"
+	"slices"
 	"sync"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 var logger *zap.Logger
@@ -16,25 +16,23 @@ func getEncoder() zapcore.Encoder {
 	return zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
 }
 
-func getLogWriter() zapcore.WriteSyncer {
-	lumberJackLogger := &lumberjack.Logger{
-		Filename:   "./logs/api-gateway.log",
-		MaxSize:    500,
-		MaxBackups: 2,
-		MaxAge:     30,
-		Compress:   false,
-	}
-	return zapcore.AddSync(lumberJackLogger)
-}
-
 func NewLogger() *zap.Logger {
 	if logger == nil {
 		loggerOnce.Do(func() {
-			logLevel, err := zapcore.ParseLevel(os.Getenv("LOG_LEVEL"))
-			if err != nil {
-				logLevel = zapcore.ErrorLevel
-			}
-			core := zapcore.NewCore(getEncoder(), getLogWriter(), logLevel)
+			stdoutLevelEnabler := zap.LevelEnablerFunc(func(l zapcore.Level) bool {
+				return l == zap.DebugLevel || l == zap.InfoLevel
+			})
+			stderrLevelEnabler := zap.LevelEnablerFunc(func(l zapcore.Level) bool {
+				return slices.Contains([]zapcore.Level{
+					zap.ErrorLevel,
+					zap.DPanicLevel,
+					zap.PanicLevel,
+				}, l)
+			})
+			core := zapcore.NewTee(
+				zapcore.NewCore(getEncoder(), zapcore.Lock(os.Stdout), stdoutLevelEnabler),
+				zapcore.NewCore(getEncoder(), zapcore.Lock(os.Stderr), stderrLevelEnabler),
+			)
 			logger = zap.New(core, zap.AddStacktrace(zapcore.ErrorLevel))
 		})
 	}
