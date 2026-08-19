@@ -2,11 +2,13 @@ package middleware
 
 import (
 	"api-gateway/helper"
+	"errors"
 	"net/http"
 	"slices"
 	"strconv"
 	"strings"
-	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 var _ Middleware = (*Authenticate)(nil)
@@ -15,16 +17,16 @@ type Authenticate struct {
 	baseMiddleware
 }
 
-func (m *Authenticate) getUserClaim(r *http.Request) (helper.UserClaims, bool) {
+func (m *Authenticate) getUserClaim(r *http.Request) (helper.UserClaims, error) {
 	token := r.Header.Get("authorization")
 	if !strings.HasPrefix(token, "Bearer ") {
-		return helper.UserClaims{}, false
+		return helper.UserClaims{}, errors.New("token missing")
 	}
 	claims, err := (&helper.Jwt{}).ParseUserToken(token[7:])
-	if err != nil || claims.ExpiresAt == nil {
-		return helper.UserClaims{}, false
+	if err != nil {
+		return helper.UserClaims{}, err
 	}
-	return *claims, true
+	return *claims, nil
 }
 
 func (m *Authenticate) setClaimToHeader(claim helper.UserClaims, r *http.Request) {
@@ -37,16 +39,15 @@ func (m *Authenticate) Handle() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		upstream := helper.GetUpstream(r.Context())
 		if upstream != nil && upstream.Auth {
-			userClaim, ok := m.getUserClaim(r)
-			if !ok {
-				helper.JSONResponse(w, http.StatusUnauthorized, map[string]string{}, map[string]string{
-					"msg": "Unauthorized",
-				})
-				return
-			}
-			if userClaim.ExpiresAt.Compare(time.Now()) == -1 {
+			userClaim, err := m.getUserClaim(r)
+			if errors.Is(err, jwt.ErrTokenExpired) {
 				helper.JSONResponse(w, http.StatusForbidden, map[string]string{}, map[string]string{
 					"msg": "Token expired",
+				})
+				return
+			} else if err != nil {
+				helper.JSONResponse(w, http.StatusUnauthorized, map[string]string{}, map[string]string{
+					"msg": "Unauthorized",
 				})
 				return
 			}

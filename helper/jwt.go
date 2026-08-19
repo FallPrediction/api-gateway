@@ -23,6 +23,13 @@ type UserClaims struct {
 	jwt.RegisteredClaims
 }
 
+func (c UserClaims) Validate() error {
+	if c.ExpiresAt == nil {
+		return errors.New("Claim expires at should exists.")
+	}
+	return nil
+}
+
 func (j *Jwt) ParseUserToken(tokenString string) (*UserClaims, error) {
 	logger := logger.NewLogger()
 	key := os.Getenv("APP_KEY")
