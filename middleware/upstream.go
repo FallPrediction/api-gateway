@@ -10,6 +10,7 @@ import (
 var _ Middleware = (*Upstream)(nil)
 
 type Upstream struct {
+	upstreams map[string]helper.Upstream
 	baseMiddleware
 }
 
@@ -28,7 +29,7 @@ func upstreamKeyFromRequestPath(requestPath string) string {
 func (m *Upstream) Handle() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		upstreamKey := upstreamKeyFromRequestPath(r.URL.Path)
-		upstream, ok := helper.Upstreams[upstreamKey]
+		upstream, ok := m.upstreams[upstreamKey]
 		if ok {
 			r = r.WithContext(helper.WithUpstream(r.Context(), &upstream))
 			m.next.ServeHTTP(w, r)
@@ -38,6 +39,6 @@ func (m *Upstream) Handle() http.Handler {
 	})
 }
 
-func NewUpstream() Upstream {
-	return Upstream{}
+func NewUpstream(upstreams map[string]helper.Upstream) Upstream {
+	return Upstream{upstreams: upstreams}
 }

@@ -30,8 +30,6 @@ type Upstream struct {
 	} `yaml:"cors"`
 }
 
-var Upstreams map[string]Upstream
-
 type upstreamContextKey struct{}
 
 var upstreamCtxKey upstreamContextKey

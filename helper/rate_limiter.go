@@ -4,9 +4,9 @@ import (
 	"golang.org/x/time/rate"
 )
 
-func NewRateLimiters() map[string]*rate.Limiter {
+func NewRateLimiters(upstreams map[string]Upstream) map[string]*rate.Limiter {
 	limiters := make(map[string]*rate.Limiter)
-	for _, upstream := range Upstreams {
+	for _, upstream := range upstreams {
 		if upstream.RateLimt.Rate > 0 && upstream.RateLimt.Max > 0 {
 			limiters[upstream.Name] = rate.NewLimiter(rate.Limit(upstream.RateLimt.Rate), upstream.RateLimt.Max)
 		} else {

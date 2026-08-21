@@ -54,9 +54,9 @@ func (c *CircuitBreaker) TrialCallOver() {
 	c.halfOpenInFlight.Store(false)
 }
 
-func NewNewCircuitBreakers() map[string]*CircuitBreaker {
+func NewNewCircuitBreakers(upstreams map[string]Upstream) map[string]*CircuitBreaker {
 	limiters := make(map[string]*CircuitBreaker)
-	for _, upstream := range Upstreams {
+	for _, upstream := range upstreams {
 		limiters[upstream.Name] = NewCircuitBreaker(5, 30*time.Second)
 	}
 	return limiters
