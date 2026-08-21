@@ -15,15 +15,11 @@ type Upstream struct {
 }
 
 func upstreamKeyFromRequestPath(requestPath string) string {
-	clean := path.Clean("/" + strings.TrimLeft(requestPath, "/"))
-	if clean == "/" {
+	clean := strings.TrimLeft(path.Clean(requestPath), "./")
+	if clean == "" {
 		return ""
 	}
-	segment := strings.SplitN(strings.TrimPrefix(clean, "/"), "/", 2)[0]
-	if segment == "" {
-		return ""
-	}
-	return "/" + segment
+	return "/" + strings.SplitN(clean, "/", 2)[0]
 }
 
 func (m *Upstream) Handle() http.Handler {
