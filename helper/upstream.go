@@ -11,23 +11,27 @@ type cfg struct {
 	Upstreams []Upstream `yaml:"upstreams"`
 }
 
+type RateLimit struct {
+	Rate float64 `yaml:"rate"`
+	Max  int     `yaml:"max"`
+}
+
+type Cors struct {
+	AllowedMethods      []string `yaml:"allowed_methods"`
+	AllowedOrigin       string   `yaml:"allowed_origin"`
+	AllowedHeaders      []string `yaml:"allowed_headers"`
+	ExposedHeaders      []string `yaml:"exposed_headers"`
+	MaxAge              int      `yaml:"max_age"`
+	SupportsCredentials bool     `yaml:"supports_credentials"`
+}
+
 type Upstream struct {
-	Name     string `yaml:"name"`
-	Path     string `yaml:"path"`
-	Upstream string `yaml:"upstream"`
-	Auth     bool   `yaml:"auth"`
-	RateLimt struct {
-		Rate float64 `yaml:"rate"`
-		Max  int     `yaml:"max"`
-	} `yaml:"rate_limit"`
-	Cors struct {
-		AllowedMethods      []string `yaml:"allowed_methods"`
-		AllowedOrigin       string   `yaml:"allowed_origin"`
-		AllowedHeaders      []string `yaml:"allowed_headers"`
-		ExposedHeaders      []string `yaml:"exposed_headers"`
-		MaxAge              int      `yaml:"max_age"`
-		SupportsCredentials bool     `yaml:"supports_credentials"`
-	} `yaml:"cors"`
+	Name     string    `yaml:"name"`
+	Path     string    `yaml:"path"`
+	Upstream string    `yaml:"upstream"`
+	Auth     bool      `yaml:"auth"`
+	RateLimt RateLimit `yaml:"rate_limit"`
+	Cors     Cors      `yaml:"cors"`
 }
 
 type upstreamContextKey struct{}
