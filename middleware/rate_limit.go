@@ -32,6 +32,19 @@ func (m *RateLimit) Handle() http.Handler {
 		upstream := helper.GetUpstream(r.Context())
 		reservation := m.getLimiter(upstream).Reserve()
 		if !reservation.OK() {
+			reservation.Cancel()
+			helper.GatewayRequestTotal.WithLabelValues(upstream.Name, "reject", r.URL.Path).Inc()
+			helper.JSONResponse(
+				w,
+				http.StatusTooManyRequests,
+				map[string]string{},
+				map[string]string{
+					"msg": "Request tokens exceed the Limiter's burst size",
+				},
+			)
+			return
+		} else if reservation.Delay() > 0 {
+			reservation.Cancel()
 			helper.GatewayRequestTotal.WithLabelValues(upstream.Name, "reject", r.URL.Path).Inc()
 			helper.JSONResponse(
 				w,
