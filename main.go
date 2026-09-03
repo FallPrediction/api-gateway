@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.uber.org/zap"
 )
 
 var isShuttinDown atomic.Bool
@@ -36,6 +37,14 @@ func getHandler(handler handler.Handler, middlewares ...middleware.Middleware) h
 }
 
 func main() {
+	logger := logger.NewLogger()
+
+	upstreams, err := helper.LoadConfig("config.yaml")
+	if err != nil {
+		logger.Panic("Fail load config", zap.String("err", err.Error()))
+	}
+	helper.Upstreams = upstreams
+
 	// SIGINT/SIGTERM context
 	rootCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -63,7 +72,6 @@ func main() {
 
 	// isShuttinDown 設為 true，讓 health check API 回傳 503
 	isShuttinDown.Store(true)
-	logger := logger.NewLogger()
 	logger.Info("Received shutdown signal, shutting down.")
 	// 等待 5 秒讓 ALB/K8S 通過 health check API 感知到服務正在 shutdown
 	time.Sleep(readinessDrainDelay)
@@ -72,7 +80,7 @@ func main() {
 	// 設定留 30 秒處理剩餘的請求
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownPeriod)
 	defer cancel()
-	err := server.Shutdown(shutdownCtx)
+	err = server.Shutdown(shutdownCtx)
 	// 通知所有 handler global context 已取消
 	stopOngoingGracefully()
 	if err != nil {

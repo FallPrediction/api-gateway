@@ -36,21 +36,23 @@ type upstreamContextKey struct{}
 
 var upstreamCtxKey upstreamContextKey
 
-func init() {
-	data, err := os.ReadFile("./config.yaml")
+func LoadConfig(configPath string) (map[string]Upstream, error) {
+	upstreams := make(map[string]Upstream)
+
+	data, err := os.ReadFile(configPath)
 	if err != nil {
-		panic(err)
+		return upstreams, err
 	}
 
 	var cfg cfg
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		panic(err)
+		return upstreams, err
 	}
 
-	Upstreams = make(map[string]Upstream)
 	for _, upstream := range cfg.Upstreams {
-		Upstreams[upstream.Path] = upstream
+		upstreams[upstream.Path] = upstream
 	}
+	return upstreams, err
 }
 
 func WithUpstream(ctx context.Context, upstream *Upstream) context.Context {
