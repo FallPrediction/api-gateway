@@ -1,16 +1,17 @@
 package middleware
 
 import (
-	"api-gateway/helper"
 	"net/http"
 	"path"
 	"strings"
+
+	"github.com/FallPrediction/api-gateway/internal/upstream"
 )
 
 var _ Middleware = (*Upstream)(nil)
 
 type Upstream struct {
-	upstreams map[string]helper.Upstream
+	upstreams map[string]upstream.Upstream
 	baseMiddleware
 }
 
@@ -25,9 +26,9 @@ func upstreamKeyFromRequestPath(requestPath string) string {
 func (m *Upstream) Handle() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		upstreamKey := upstreamKeyFromRequestPath(r.URL.Path)
-		upstream, ok := m.upstreams[upstreamKey]
+		u, ok := m.upstreams[upstreamKey]
 		if ok {
-			r = r.WithContext(helper.WithUpstream(r.Context(), &upstream))
+			r = r.WithContext(upstream.WithUpstream(r.Context(), &u))
 			m.next.ServeHTTP(w, r)
 			return
 		}
@@ -35,6 +36,6 @@ func (m *Upstream) Handle() http.Handler {
 	})
 }
 
-func NewUpstream(upstreams map[string]helper.Upstream) Upstream {
+func NewUpstream(upstreams map[string]upstream.Upstream) Upstream {
 	return Upstream{upstreams: upstreams}
 }

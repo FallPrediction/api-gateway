@@ -1,10 +1,6 @@
 package main
 
 import (
-	"api-gateway/handler"
-	"api-gateway/helper"
-	"api-gateway/logger"
-	"api-gateway/middleware"
 	"context"
 	"net"
 	"net/http"
@@ -12,6 +8,15 @@ import (
 	"sync/atomic"
 	"syscall"
 	"time"
+
+	"github.com/FallPrediction/api-gateway/internal/circuitbreaker"
+	"github.com/FallPrediction/api-gateway/internal/handler"
+	"github.com/FallPrediction/api-gateway/internal/logger"
+	"github.com/FallPrediction/api-gateway/internal/metric"
+	"github.com/FallPrediction/api-gateway/internal/middleware"
+	"github.com/FallPrediction/api-gateway/internal/ratelimit"
+	"github.com/FallPrediction/api-gateway/internal/response"
+	"github.com/FallPrediction/api-gateway/internal/upstream"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
@@ -88,15 +93,15 @@ func main() {
 func setRoute() {
 	proxy := handler.NewGateway()
 	recoveryMiddleware := middleware.NewRecover()
-	upstreams, err := helper.LoadConfig("config.yaml")
+	upstreams, err := upstream.LoadConfig("config.yaml")
 	if err != nil {
 		logger := logger.NewLogger()
 		logger.Panic("Fail load config", zap.String("err", err.Error()))
 	}
 	upstreamMiddleware := middleware.NewUpstream(upstreams)
 	corsMiddleware := middleware.NewCors()
-	rateLimitMiddleware := middleware.NewRateLimit(helper.NewRateLimiters(upstreams))
-	circuitBreakerMiddleware := middleware.NewCircuitBreaker(helper.NewNewCircuitBreakers(upstreams))
+	rateLimitMiddleware := middleware.NewRateLimit(ratelimit.NewRateLimiters(upstreams))
+	circuitBreakerMiddleware := middleware.NewCircuitBreaker(circuitbreaker.NewNewCircuitBreakers(upstreams))
 	logMiddleware := middleware.NewLog()
 	authenticateMiddleware := middleware.NewAuthenticate()
 	http.Handle("/", getHandler(
@@ -109,15 +114,15 @@ func setRoute() {
 		&logMiddleware,
 		&authenticateMiddleware,
 	))
-	http.Handle("/metrics", promhttp.HandlerFor(helper.NewRegistry(), promhttp.HandlerOpts{}))
+	http.Handle("/metrics", promhttp.HandlerFor(metric.NewRegistry(), promhttp.HandlerOpts{}))
 	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		if isShuttinDown.Load() {
-			helper.JSONResponse(w, http.StatusServiceUnavailable, map[string]string{}, map[string]string{
+			response.JSONResponse(w, http.StatusServiceUnavailable, map[string]string{}, map[string]string{
 				"msg": "Shutting down",
 			})
 			return
 		}
-		helper.JSONResponse(w, http.StatusOK, map[string]string{}, map[string]string{
+		response.JSONResponse(w, http.StatusOK, map[string]string{}, map[string]string{
 			"msg": "OK",
 		})
 	})

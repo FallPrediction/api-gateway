@@ -1,12 +1,13 @@
 package handler_test
 
 import (
-	"api-gateway/handler"
-	"api-gateway/helper"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/FallPrediction/api-gateway/internal/handler"
+	"github.com/FallPrediction/api-gateway/internal/upstream"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -27,7 +28,7 @@ func TestGateway_Handle(t *testing.T) {
 
 		req := httptest.NewRequest("GET", "/orders?status[]=1&status[]=2&order_by=date", nil)
 		req.Header.Set("Accept", "application/json")
-		req = req.WithContext(helper.WithUpstream(req.Context(), &helper.Upstream{Name: "order", Upstream: ts.URL}))
+		req = req.WithContext(upstream.WithUpstream(req.Context(), &upstream.Upstream{Name: "order", Upstream: ts.URL}))
 		w := httptest.NewRecorder()
 		handler := handler.NewGateway()
 		handler.Handle().ServeHTTP(w, req)

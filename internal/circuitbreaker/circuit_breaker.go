@@ -1,8 +1,10 @@
-package helper
+package circuitbreaker
 
 import (
 	"sync/atomic"
 	"time"
+
+	"github.com/FallPrediction/api-gateway/internal/upstream"
 )
 
 type CircuitBreakerState int
@@ -54,10 +56,10 @@ func (c *CircuitBreaker) TrialCallOver() {
 	c.halfOpenInFlight.Store(false)
 }
 
-func NewNewCircuitBreakers(upstreams map[string]Upstream) map[string]*CircuitBreaker {
+func NewNewCircuitBreakers(upstreams map[string]upstream.Upstream) map[string]*CircuitBreaker {
 	limiters := make(map[string]*CircuitBreaker)
-	for _, upstream := range upstreams {
-		limiters[upstream.Name] = NewCircuitBreaker(5, 30*time.Second)
+	for _, u := range upstreams {
+		limiters[u.Name] = NewCircuitBreaker(5, 30*time.Second)
 	}
 	return limiters
 }

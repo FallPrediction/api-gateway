@@ -1,4 +1,4 @@
-module api-gateway
+module github.com/FallPrediction/api-gateway
 
 go 1.24.0
 

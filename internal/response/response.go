@@ -1,9 +1,9 @@
-package helper
+package response
 
 import (
-	"api-gateway/logger"
 	"encoding/json"
 	"fmt"
+	"github.com/FallPrediction/api-gateway/internal/logger"
 	"net/http"
 
 	"go.uber.org/zap"

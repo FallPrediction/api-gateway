@@ -1,19 +1,20 @@
 package middleware_test
 
 import (
-	"api-gateway/helper"
-	"api-gateway/middleware"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/FallPrediction/api-gateway/internal/middleware"
+	"github.com/FallPrediction/api-gateway/internal/upstream"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func TestUpstream_Handle(t *testing.T) {
-	upstream := helper.Upstream{Name: "order"}
-	m := middleware.NewUpstream(map[string]helper.Upstream{"/order": upstream})
+	u := upstream.Upstream{Name: "order"}
+	m := middleware.NewUpstream(map[string]upstream.Upstream{"/order": u})
 
 	tests := []struct {
 		name           string
@@ -44,9 +45,9 @@ func TestUpstream_Handle(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m.SetNext(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				gotUpstream := helper.GetUpstream(r.Context())
+				gotUpstream := upstream.GetUpstream(r.Context())
 				if tt.returnNotFound == false && assert.NotNil(t, gotUpstream, "downstream request should contain upstream") {
-					assert.Equal(t, upstream, *gotUpstream)
+					assert.Equal(t, u, *gotUpstream)
 				}
 				w.WriteHeader(http.StatusOK)
 			}))

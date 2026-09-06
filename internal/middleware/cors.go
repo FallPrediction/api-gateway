@@ -1,10 +1,11 @@
 package middleware
 
 import (
-	"api-gateway/helper"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/FallPrediction/api-gateway/internal/upstream"
 )
 
 var _ Middleware = (*Cors)(nil)
@@ -15,7 +16,7 @@ type Cors struct {
 
 func (m *Cors) Handle() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		config := helper.GetUpstream(r.Context()).Cors
+		config := upstream.GetUpstream(r.Context()).Cors
 
 		if config.AllowedOrigin != "" {
 			w.Header().Set("Access-Control-Allow-Origin", config.AllowedOrigin)

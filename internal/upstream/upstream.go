@@ -1,4 +1,4 @@
-package helper
+package upstream
 
 import (
 	"context"
@@ -51,8 +51,8 @@ func LoadConfig(configPath string) (map[string]Upstream, error) {
 		return upstreams, err
 	}
 
-	for _, upstream := range cfg.Upstreams {
-		upstreams[upstream.Path] = upstream
+	for _, u := range cfg.Upstreams {
+		upstreams[u.Path] = u
 	}
 	return upstreams, err
 }
@@ -63,9 +63,9 @@ func WithUpstream(ctx context.Context, upstream *Upstream) context.Context {
 
 func GetUpstream(requestContext context.Context) *Upstream {
 	if v := requestContext.Value(upstreamCtxKey); v != nil {
-		upstream, ok := v.(*Upstream)
+		u, ok := v.(*Upstream)
 		if ok {
-			return upstream
+			return u
 		}
 	}
 	return nil

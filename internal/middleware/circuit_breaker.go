@@ -1,30 +1,34 @@
 package middleware
 
 import (
-	"api-gateway/helper"
 	"net/http"
+
+	"github.com/FallPrediction/api-gateway/internal/circuitbreaker"
+	"github.com/FallPrediction/api-gateway/internal/metric"
+	"github.com/FallPrediction/api-gateway/internal/response"
+	"github.com/FallPrediction/api-gateway/internal/upstream"
 )
 
 var _ Middleware = (*CircuitBreaker)(nil)
 
 type CircuitBreaker struct {
 	baseMiddleware
-	CircuitBreakers map[string]*helper.CircuitBreaker
+	CircuitBreakers map[string]*circuitbreaker.CircuitBreaker
 }
 
 func (m *CircuitBreaker) Handle() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		upstream := helper.GetUpstream(r.Context()).Name
-		circuitBreaker := m.CircuitBreakers[upstream]
+		u := upstream.GetUpstream(r.Context()).Name
+		circuitBreaker := m.CircuitBreakers[u]
 		if circuitBreaker == nil {
 			m.next.ServeHTTP(w, r)
 			return
 		}
 
 		state := circuitBreaker.GetState()
-		if state == helper.Open {
-			helper.CircuitBreakerOpen.WithLabelValues(upstream).Inc()
-			helper.JSONResponse(
+		if state == circuitbreaker.Open {
+			metric.CircuitBreakerOpen.WithLabelValues(u).Inc()
+			response.JSONResponse(
 				w,
 				http.StatusServiceUnavailable,
 				map[string]string{},
@@ -33,9 +37,9 @@ func (m *CircuitBreaker) Handle() http.Handler {
 			return
 		}
 
-		if state == helper.HalfOpen && !circuitBreaker.TrialCallStart() {
-			helper.CircuitBreakerOpen.WithLabelValues(upstream).Inc()
-			helper.JSONResponse(
+		if state == circuitbreaker.HalfOpen && !circuitBreaker.TrialCallStart() {
+			metric.CircuitBreakerOpen.WithLabelValues(u).Inc()
+			response.JSONResponse(
 				w,
 				http.StatusServiceUnavailable,
 				map[string]string{},
@@ -44,11 +48,11 @@ func (m *CircuitBreaker) Handle() http.Handler {
 			return
 		}
 
-		if state == helper.HalfOpen {
+		if state == circuitbreaker.HalfOpen {
 			defer circuitBreaker.TrialCallOver()
 		}
 
-		rw := helper.NewResponseWriter(w)
+		rw := response.NewResponseWriter(w)
 		m.next.ServeHTTP(rw, r)
 
 		if rw.StatusCode >= http.StatusInternalServerError {
@@ -60,7 +64,7 @@ func (m *CircuitBreaker) Handle() http.Handler {
 	})
 }
 
-func NewCircuitBreaker(circuitBreakers map[string]*helper.CircuitBreaker) CircuitBreaker {
+func NewCircuitBreaker(circuitBreakers map[string]*circuitbreaker.CircuitBreaker) CircuitBreaker {
 	return CircuitBreaker{
 		CircuitBreakers: circuitBreakers,
 	}

@@ -1,9 +1,6 @@
 package middleware_test
 
 import (
-	"api-gateway/helper"
-	"api-gateway/middleware"
-	"api-gateway/middleware/internal/testutil"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -11,22 +8,27 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/FallPrediction/api-gateway/internal/middleware"
+	"github.com/FallPrediction/api-gateway/internal/ratelimit"
+	"github.com/FallPrediction/api-gateway/internal/testutil"
+	"github.com/FallPrediction/api-gateway/internal/upstream"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRateLimit_Handle(t *testing.T) {
-	upstream := helper.Upstream{
+	u := upstream.Upstream{
 		Name: "order",
-		RateLimt: helper.RateLimit{
+		RateLimt: upstream.RateLimit{
 			Rate: 1,
 			Max:  1,
 		},
 	}
-	m := middleware.NewRateLimit(helper.NewRateLimiters(map[string]helper.Upstream{
-		"/order": upstream,
+	m := middleware.NewRateLimit(ratelimit.NewRateLimiters(map[string]upstream.Upstream{
+		"/order": u,
 	}))
 	m.SetNext(testutil.MockResponse(http.StatusOK))
-	req := testutil.CreateRequestWithUpstream(&upstream)
+	req := testutil.CreateRequestWithUpstream(&u)
 
 	w := httptest.NewRecorder()
 	m.Handle().ServeHTTP(w, req)

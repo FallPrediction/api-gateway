@@ -1,9 +1,6 @@
 package middleware_test
 
 import (
-	"api-gateway/helper"
-	"api-gateway/middleware"
-	"api-gateway/middleware/internal/testutil"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -11,25 +8,30 @@ import (
 	"testing"
 	"time"
 
+	"github.com/FallPrediction/api-gateway/internal/circuitbreaker"
+	"github.com/FallPrediction/api-gateway/internal/middleware"
+	"github.com/FallPrediction/api-gateway/internal/testutil"
+	"github.com/FallPrediction/api-gateway/internal/upstream"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCircuitBreaker_Handle(t *testing.T) {
 	failureThreshold := 2
-	m := middleware.NewCircuitBreaker(map[string]*helper.CircuitBreaker{
-		"order": helper.NewCircuitBreaker(failureThreshold, time.Second),
+	m := middleware.NewCircuitBreaker(map[string]*circuitbreaker.CircuitBreaker{
+		"order": circuitbreaker.NewCircuitBreaker(failureThreshold, time.Second),
 	})
 	m.SetNext(testutil.MockResponse(http.StatusInternalServerError))
 
-	upstream := &helper.Upstream{Name: "order"}
+	u := &upstream.Upstream{Name: "order"}
 	for range failureThreshold {
 		w := httptest.NewRecorder()
-		m.Handle().ServeHTTP(w, testutil.CreateRequestWithUpstream(upstream))
+		m.Handle().ServeHTTP(w, testutil.CreateRequestWithUpstream(u))
 		assert.Equal(t, http.StatusInternalServerError, w.Result().StatusCode, "The last few calls returned 500 status code.")
 	}
 
 	w := httptest.NewRecorder()
-	m.Handle().ServeHTTP(w, testutil.CreateRequestWithUpstream(upstream))
+	m.Handle().ServeHTTP(w, testutil.CreateRequestWithUpstream(u))
 	assert.Equal(t, http.StatusServiceUnavailable, w.Result().StatusCode, "After failureThreshold failed calls, the next call returns 503 status code.")
 	respBody := struct {
 		Msg string
@@ -44,6 +46,6 @@ func TestCircuitBreaker_Handle(t *testing.T) {
 	m.SetNext(testutil.MockResponse(http.StatusOK))
 	_, _ = io.Copy(io.Discard, w.Result().Body)
 	w.Result().Body.Close()
-	m.Handle().ServeHTTP(w, testutil.CreateRequestWithUpstream(upstream))
+	m.Handle().ServeHTTP(w, testutil.CreateRequestWithUpstream(u))
 	assert.Equal(t, http.StatusOK, w.Result().StatusCode, "Call again one second later to trigger a trial call and the status code of response is 200.")
 }

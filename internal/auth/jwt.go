@@ -1,9 +1,9 @@
-package helper
+package auth
 
 import (
-	"api-gateway/logger"
 	"errors"
 	"fmt"
+	"github.com/FallPrediction/api-gateway/internal/logger"
 	"os"
 
 	"github.com/golang-jwt/jwt/v5"

@@ -1,10 +1,11 @@
 package middleware
 
 import (
-	"api-gateway/helper"
-	"api-gateway/logger"
 	"fmt"
 	"net/http"
+
+	"github.com/FallPrediction/api-gateway/internal/logger"
+	"github.com/FallPrediction/api-gateway/internal/response"
 
 	"go.uber.org/zap"
 )
@@ -24,7 +25,7 @@ func (m *Recovery) Handle() http.Handler {
 					"Panic recovered.",
 					zap.String("err", fmt.Sprintf("%v", err)),
 				)
-				helper.JSONResponse(w, http.StatusInternalServerError, map[string]string{}, map[string]string{
+				response.JSONResponse(w, http.StatusInternalServerError, map[string]string{}, map[string]string{
 					"msg": "Internal Server Error",
 				})
 			}

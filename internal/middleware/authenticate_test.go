@@ -1,9 +1,6 @@
 package middleware_test
 
 import (
-	"api-gateway/helper"
-	"api-gateway/middleware"
-	"api-gateway/middleware/internal/testutil"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -11,6 +8,11 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/FallPrediction/api-gateway/internal/auth"
+	"github.com/FallPrediction/api-gateway/internal/middleware"
+	"github.com/FallPrediction/api-gateway/internal/testutil"
+	"github.com/FallPrediction/api-gateway/internal/upstream"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
@@ -41,7 +43,7 @@ func TestAuthenticate_Handle(t *testing.T) {
 		{
 			"Request without token.",
 			func() *http.Request {
-				return testutil.CreateRequestWithUpstream(&helper.Upstream{
+				return testutil.CreateRequestWithUpstream(&upstream.Upstream{
 					Name: "order",
 					Auth: true,
 				})
@@ -52,7 +54,7 @@ func TestAuthenticate_Handle(t *testing.T) {
 		{
 			"Invalid token.",
 			func() *http.Request {
-				req := testutil.CreateRequestWithUpstream(&helper.Upstream{
+				req := testutil.CreateRequestWithUpstream(&upstream.Upstream{
 					Name: "order",
 					Auth: true,
 				})
@@ -66,7 +68,7 @@ func TestAuthenticate_Handle(t *testing.T) {
 			"Token expired",
 			func() *http.Request {
 				token, _ := createToken("order", time.Now().Add(-time.Minute))
-				req := testutil.CreateRequestWithUpstream(&helper.Upstream{
+				req := testutil.CreateRequestWithUpstream(&upstream.Upstream{
 					Name: "order",
 					Auth: true,
 				})
@@ -80,7 +82,7 @@ func TestAuthenticate_Handle(t *testing.T) {
 			"Token without scope",
 			func() *http.Request {
 				token, _ := createToken("", time.Now().Add(time.Minute))
-				req := testutil.CreateRequestWithUpstream(&helper.Upstream{
+				req := testutil.CreateRequestWithUpstream(&upstream.Upstream{
 					Name: "order",
 					Auth: true,
 				})
@@ -94,7 +96,7 @@ func TestAuthenticate_Handle(t *testing.T) {
 			"Authenticate pass",
 			func() *http.Request {
 				token, _ := createToken("order", time.Now().Add(time.Minute))
-				req := testutil.CreateRequestWithUpstream(&helper.Upstream{
+				req := testutil.CreateRequestWithUpstream(&upstream.Upstream{
 					Name: "order",
 					Auth: true,
 				})
@@ -124,8 +126,8 @@ func TestAuthenticate_Handle(t *testing.T) {
 
 func createToken(scope string, expiresAt time.Time) (string, error) {
 	t := jwt.New(jwt.GetSigningMethod("HS256"))
-	t.Claims = &helper.UserClaims{
-		UserData: helper.UserData{
+	t.Claims = &auth.UserClaims{
+		UserData: auth.UserData{
 			UserId: 1,
 			Email:  "johndoe@example.com",
 			Scope:  scope,

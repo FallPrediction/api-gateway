@@ -1,4 +1,4 @@
-package helper
+package logger
 
 import (
 	"net/http"
