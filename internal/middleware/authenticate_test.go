@@ -5,11 +5,9 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
-	"github.com/FallPrediction/api-gateway/internal/auth"
 	"github.com/FallPrediction/api-gateway/internal/middleware"
 	"github.com/FallPrediction/api-gateway/internal/testutil"
 	"github.com/FallPrediction/api-gateway/internal/upstream"
@@ -67,7 +65,7 @@ func TestAuthenticate_Handle(t *testing.T) {
 		{
 			"Token expired",
 			func() *http.Request {
-				token, _ := createToken("order", time.Now().Add(-time.Minute))
+				token, _ := testutil.CreateToken("order", time.Now().Add(-time.Minute))
 				req := testutil.CreateRequestWithUpstream(&upstream.Upstream{
 					Name: "order",
 					Auth: true,
@@ -81,7 +79,7 @@ func TestAuthenticate_Handle(t *testing.T) {
 		{
 			"Token without scope",
 			func() *http.Request {
-				token, _ := createToken("", time.Now().Add(time.Minute))
+				token, _ := testutil.CreateToken("", time.Now().Add(time.Minute))
 				req := testutil.CreateRequestWithUpstream(&upstream.Upstream{
 					Name: "order",
 					Auth: true,
@@ -95,7 +93,7 @@ func TestAuthenticate_Handle(t *testing.T) {
 		{
 			"Authenticate pass",
 			func() *http.Request {
-				token, _ := createToken("order", time.Now().Add(time.Minute))
+				token, _ := testutil.CreateToken("order", time.Now().Add(time.Minute))
 				req := testutil.CreateRequestWithUpstream(&upstream.Upstream{
 					Name: "order",
 					Auth: true,
@@ -122,19 +120,4 @@ func TestAuthenticate_Handle(t *testing.T) {
 			assert.Equal(t, tt.repMsg, respBody.Msg, tt.name)
 		})
 	}
-}
-
-func createToken(scope string, expiresAt time.Time) (string, error) {
-	t := jwt.New(jwt.GetSigningMethod("HS256"))
-	t.Claims = &auth.UserClaims{
-		UserData: auth.UserData{
-			UserId: 1,
-			Email:  "johndoe@example.com",
-			Scope:  scope,
-		},
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expiresAt),
-		},
-	}
-	return t.SignedString([]byte(os.Getenv("APP_KEY")))
 }
