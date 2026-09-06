@@ -27,7 +27,7 @@ func (h *Gateway) Handle() http.Handler {
 			rw := response.NewResponseWriter(w)
 			start := time.Now()
 
-			proxy.ServeHTTP(w, r)
+			proxy.ServeHTTP(rw, r)
 
 			metric.RequestDuration.WithLabelValues(u.Name, r.URL.Path).Observe(time.Since(start).Seconds())
 			metric.RequestsTotal.WithLabelValues(u.Name, r.Method, strconv.Itoa(rw.StatusCode), r.URL.Path).Inc()
