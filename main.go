@@ -91,6 +91,7 @@ func main() {
 }
 
 func setRoute() {
+	mux := http.NewServeMux()
 	proxy := handler.NewGateway()
 	recoveryMiddleware := middleware.NewRecover()
 	upstreams, err := upstream.LoadConfig("config.yaml")
@@ -104,7 +105,7 @@ func setRoute() {
 	circuitBreakerMiddleware := middleware.NewCircuitBreaker(circuitbreaker.NewNewCircuitBreakers(upstreams))
 	logMiddleware := middleware.NewLog()
 	authenticateMiddleware := middleware.NewAuthenticate()
-	http.Handle("/", getHandler(
+	mux.Handle("/", getHandler(
 		&proxy,
 		&recoveryMiddleware,
 		&upstreamMiddleware,
@@ -114,8 +115,8 @@ func setRoute() {
 		&logMiddleware,
 		&authenticateMiddleware,
 	))
-	http.Handle("/metrics", promhttp.HandlerFor(metric.NewRegistry(), promhttp.HandlerOpts{}))
-	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/metrics", promhttp.HandlerFor(metric.NewRegistry(), promhttp.HandlerOpts{}))
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		if isShuttingDown.Load() {
 			response.JSONResponse(w, http.StatusServiceUnavailable, map[string]string{}, map[string]string{
 				"msg": "Shutting down",
