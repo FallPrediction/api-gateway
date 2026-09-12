@@ -15,7 +15,6 @@ import (
 	"github.com/FallPrediction/api-gateway/internal/metric"
 	"github.com/FallPrediction/api-gateway/internal/middleware"
 	"github.com/FallPrediction/api-gateway/internal/ratelimit"
-	"github.com/FallPrediction/api-gateway/internal/response"
 	"github.com/FallPrediction/api-gateway/internal/upstream"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -42,11 +41,14 @@ func getHandler(handler handler.Handler, middlewares ...middleware.Middleware) h
 }
 
 func main() {
+	logger := logger.NewLogger()
+
 	// SIGINT/SIGTERM context
 	rootCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	setRoute()
+	mux := http.NewServeMux()
+	setRoute(mux, logger)
 
 	// Set global context to server.
 	ongoingCtx, stopOngoingGracefully := context.WithCancel(context.Background())
@@ -55,11 +57,12 @@ func main() {
 		BaseContext: func(_ net.Listener) context.Context {
 			return ongoingCtx
 		},
+		Handler: mux,
 	}
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			panic(err)
+			logger.Panic("Fail to listen and serve", zap.String("err", err.Error()))
 		}
 	}()
 
@@ -67,8 +70,42 @@ func main() {
 	<-rootCtx.Done()
 	stop()
 
-	logger := logger.NewLogger()
+	shutdown(server, stopOngoingGracefully, logger)
+}
 
+func setRoute(mux *http.ServeMux, logger *zap.Logger) {
+	mux.Handle("/", gatewayHandler(logger))
+	mux.Handle("/metrics", promhttp.HandlerFor(metric.NewRegistry(), promhttp.HandlerOpts{}))
+	healthHandler := handler.NewHealth(&isShuttingDown)
+	mux.Handle("/healthz", healthHandler.Handle())
+}
+
+func gatewayHandler(logger *zap.Logger) http.Handler {
+	proxy := handler.NewGateway()
+	recoveryMiddleware := middleware.NewRecover()
+	upstreams, err := upstream.LoadConfig("config.yaml")
+	if err != nil {
+		logger.Panic("Fail load config", zap.String("err", err.Error()))
+	}
+	upstreamMiddleware := middleware.NewUpstream(upstreams)
+	corsMiddleware := middleware.NewCors()
+	rateLimitMiddleware := middleware.NewRateLimit(ratelimit.NewRateLimiters(upstreams))
+	circuitBreakerMiddleware := middleware.NewCircuitBreaker(circuitbreaker.NewNewCircuitBreakers(upstreams))
+	logMiddleware := middleware.NewLog()
+	authenticateMiddleware := middleware.NewAuthenticate()
+	return getHandler(
+		&proxy,
+		&recoveryMiddleware,
+		&upstreamMiddleware,
+		&corsMiddleware,
+		&rateLimitMiddleware,
+		&circuitBreakerMiddleware,
+		&logMiddleware,
+		&authenticateMiddleware,
+	)
+}
+
+func shutdown(server *http.Server, stopOngoingGracefully context.CancelFunc, logger *zap.Logger) {
 	// isShuttingDown 設為 true，讓 health check API 回傳 503
 	isShuttingDown.Store(true)
 	logger.Info("Received shutdown signal, shutting down.")
@@ -88,43 +125,4 @@ func main() {
 		time.Sleep(shutdownHardPeriod)
 	}
 	logger.Info("Server shut down gracefully.")
-}
-
-func setRoute() {
-	mux := http.NewServeMux()
-	proxy := handler.NewGateway()
-	recoveryMiddleware := middleware.NewRecover()
-	upstreams, err := upstream.LoadConfig("config.yaml")
-	if err != nil {
-		logger := logger.NewLogger()
-		logger.Panic("Fail load config", zap.String("err", err.Error()))
-	}
-	upstreamMiddleware := middleware.NewUpstream(upstreams)
-	corsMiddleware := middleware.NewCors()
-	rateLimitMiddleware := middleware.NewRateLimit(ratelimit.NewRateLimiters(upstreams))
-	circuitBreakerMiddleware := middleware.NewCircuitBreaker(circuitbreaker.NewNewCircuitBreakers(upstreams))
-	logMiddleware := middleware.NewLog()
-	authenticateMiddleware := middleware.NewAuthenticate()
-	mux.Handle("/", getHandler(
-		&proxy,
-		&recoveryMiddleware,
-		&upstreamMiddleware,
-		&corsMiddleware,
-		&rateLimitMiddleware,
-		&circuitBreakerMiddleware,
-		&logMiddleware,
-		&authenticateMiddleware,
-	))
-	mux.Handle("/metrics", promhttp.HandlerFor(metric.NewRegistry(), promhttp.HandlerOpts{}))
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		if isShuttingDown.Load() {
-			response.JSONResponse(w, http.StatusServiceUnavailable, map[string]string{}, map[string]string{
-				"msg": "Shutting down",
-			})
-			return
-		}
-		response.JSONResponse(w, http.StatusOK, map[string]string{}, map[string]string{
-			"msg": "OK",
-		})
-	})
 }
