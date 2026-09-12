@@ -22,7 +22,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var isShuttinDown atomic.Bool
+var isShuttingDown atomic.Bool
 
 const (
 	shutdownPeriod      = 30 * time.Second
@@ -69,8 +69,8 @@ func main() {
 
 	logger := logger.NewLogger()
 
-	// isShuttinDown 設為 true，讓 health check API 回傳 503
-	isShuttinDown.Store(true)
+	// isShuttingDown 設為 true，讓 health check API 回傳 503
+	isShuttingDown.Store(true)
 	logger.Info("Received shutdown signal, shutting down.")
 	// 等待 5 秒讓 ALB/K8S 通過 health check API 感知到服務正在 shutdown
 	time.Sleep(readinessDrainDelay)
@@ -116,7 +116,7 @@ func setRoute() {
 	))
 	http.Handle("/metrics", promhttp.HandlerFor(metric.NewRegistry(), promhttp.HandlerOpts{}))
 	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		if isShuttinDown.Load() {
+		if isShuttingDown.Load() {
 			response.JSONResponse(w, http.StatusServiceUnavailable, map[string]string{}, map[string]string{
 				"msg": "Shutting down",
 			})
