@@ -7,7 +7,7 @@ import (
 	"github.com/FallPrediction/api-gateway/internal/response"
 )
 
-var _ Handler = (*Gateway)(nil)
+var _ Handler = (*Health)(nil)
 
 type Health struct {
 	isShuttingDown *atomic.Bool
